@@ -1,18 +1,16 @@
 import requests
 
 def scan_xss(url):
-    """Scans a URL for basic XSS vulnerabilities."""
-    test_payload = "<script>alert('xss')</script>"
+    """Проверяет URL на XSS уязвимости"""
+    js_test = "<scri>alert(1)</scri>"
     try:
-        response = requests.get(f"{url}?q={test_payload}")
-        # Check if the payload appears in the response, indicating potential XSS
-        if test_payload in response.text:
-            print("[!] Potential XSS vulnerability detected!")
+        page = req.get(f"{url}?input={js_test}")
+        if js_test in page.text:
+            print("[!] Обнаружена возможная XSS уязвимость!")
             return True
-        else:
-            print("[+] No XSS vulnerability found.")
-            return False
-    except requests.RequestException as e:
-        print(f"Error scanning URL: {e}")
+        print("[+] XSS уязвимостей не обнаружено")
+        return False
+    except req.HTTPError as e:
+        print(f"Ошибка анализа: {e}")
         return False
 
