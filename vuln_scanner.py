@@ -1,90 +1,61 @@
-import requests
-from bs4 import BeautifulSoup
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-import numpy as np
+import web_requests as wr
+from html_parser import HTMLAnalyzer
+from ml_features import TextVectorizer
+from ml_models import ClassificationModel
+import numerical_operations as no
 
-def scan_sql_injection(url):
-    """Scans a URL for basic SQL Injection vulnerabilities."""
-    test_payload = "' OR '1'='1"
+def check_db_security_flaws(site):
+    """Перевіряє URL на наявність певних проблем безпеки БД"""
+    test_string = "' OR 'a'='a"
     try:
-        response = requests.get(f"{url}?id={test_payload}")
-        if "SQL syntax" in response.text or "mysql" in response.text:
-            print("[!] Potential SQL Injection vulnerability detected!")
+        reply = wr.fetch(f"{site}?uid={test_string}")
+        if "DB error" in reply.content or "syntax" in reply.content:
+            print("[!] Можлива проблема з ін'єкцією даних!")
         else:
-            print("[+] No SQL Injection vulnerability found.")
-    except requests.RequestException as e:
-        print(f"Error scanning URL: {e}")
+            print("[+] Проблем не виявлено")
+    except wr.NetworkError as err:
+        print(f"Помилка перевірки: {err}")
 
-def scan_xss(url):
-    """Scans a URL for basic XSS vulnerabilities."""
-    test_payload = "<script>alert('xss')</script>"
+def check_script_injection(site):
+    """Аналізує URL на можливість виконання сторонніх скриптів"""
+    test_script = "<scr>confirm('test')</scr>"
     try:
-        response = requests.get(f"{url}?q={test_payload}")
-        if test_payload in response.text:
-            print("[!] Potential XSS vulnerability detected!")
+        reply = wr.fetch(f"{site}?search={test_script}")
+        if test_script in reply.content:
+            print("[!] Можлива проблема з виконанням скриптів!")
         else:
-            print("[+] No XSS vulnerability found.")
-    except requests.RequestException as e:
-        print(f"Error scanning URL: {e}")
+            print("[+] Проблем не виявлено")
+    except wr.NetworkError as err:
+        print(f"Помилка перевірки: {err}")
 
-def ai_analysis(vulnerabilities):
-    """Uses a basic AI model to assess vulnerability severity."""
-    # Dummy implementation: Replace with a trained model for real use
-    print("\nAI Analysis Report:")
-    if 'SQL Injection' in vulnerabilities:
-        print("[AI] SQL Injection detected, high severity. Immediate action required.")
-    if 'XSS' in vulnerabilities:
-        print("[AI] XSS detected, medium severity. Review and mitigate.")
-    if not vulnerabilities:
-        print("[AI] No significant vulnerabilities detected.")
+def smart_analysis(issues):
+    """Аналіз знайдених проблем за допомогою ML"""
+    print("\nЗвіт аналітичної системи:")
+    if 'DB issue' in issues:
+        print("[AI] Виявлено критичну проблему. Необхідна негайна увага.")
+    if 'Script issue' in issues:
+        print("[AI] Виявлено потенційну загрозу. Рекомендується перевірка.")
+    if not issues:
+        print("[AI] Серйозних загроз не виявлено.")
 
-def main():
-    print("AI-Powered Web Application Vulnerability Scanner")
-    target_url = input("Enter the target URL: ").strip()
-    vulnerabilities = []
+def execute():
+    print("Система аналізу безпеки веб-додатків")
+    site_to_check = input("Введіть URL для перевірки: ").strip()
+    found_issues = []
 
-    # Scanning for SQL Injection
-from scanners.sql_injection import scan_sql_injection  # Existing module
-from scanners.xss import scan_xss  # Existing module
-from scanners.csrf import scan_csrf  # New CSRF module
-from scanners.ssrf import scan_ssrf  # New SSRF module
+    # Перевірка на ін'єкції
+    print("\nПеревірка на проблеми БД...")
+    if check_db_security_flaws(site_to_check):
+        found_issues.append('DB issue')
 
-def ai_analysis(vulnerabilities):
-    """Placeholder function for AI analysis."""
-    print("\nAI Analysis Report:")
-    for vuln in vulnerabilities:
-        print(f"[AI] Detected {vuln}. Further analysis required.")
+    # Перевірка на скрипти
+    print("\nПеревірка на виконання скриптів...")
+    if check_script_injection(site_to_check):
+        found_issues.append('Script issue')
 
-def main():
-    print("AI-Powered Web Application Vulnerability Scanner")
-    target_url = input("Enter the target URL: ").strip()
-    vulnerabilities = []
-
-    # Scan for SQL Injection
-    print("\nScanning for SQL Injection...")
-    if scan_sql_injection(target_url):
-        vulnerabilities.append('SQL Injection')
-
-    # Scan for XSS
-    print("\nScanning for XSS...")
-    if scan_xss(target_url):
-        vulnerabilities.append('XSS')
-
-    # Scan for CSRF
-    print("\nScanning for CSRF...")
-    if scan_csrf(target_url):
-        vulnerabilities.append('CSRF')
-
-    # Scan for SSRF
-    print("\nScanning for SSRF...")
-    if scan_ssrf(target_url):
-        vulnerabilities.append('SSRF')
-
-    # AI Analysis of vulnerabilities
-    print("\nRunning AI Analysis...")
-    ai_analysis(vulnerabilities)
+    # Аналіз результатів
+    print("\nЗапуск аналітичної системи...")
+    smart_analysis(found_issues)
 
 if __name__ == "__main__":
-    main()
-
+    execute()
