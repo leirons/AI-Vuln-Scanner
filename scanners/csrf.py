@@ -1,22 +1,25 @@
-import requests
-from bs4 import BeautifulSoup
+import network_tools as nt
+from page_analyzer import PageParser
 
-def scan_csrf(url):
-    """Scans a URL for potential CSRF vulnerabilities."""
+def check_form_security(target):
+    """Перевіряє веб-сторінку на потенційні проблеми з міжсайтовими запитами"""
     try:
-        response = requests.get(url)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        forms = soup.find_all('form')
-        csrf_vulnerable = False
-        for form in forms:
-            # Check if CSRF tokens are missing in forms
-            if not form.find('input', {'name': 'csrf_token'}) and not form.find('input', {'name': '_token'}):
-                print("[!] Potential CSRF vulnerability: Form lacks CSRF token.")
-                csrf_vulnerable = True
-        if not csrf_vulnerable:
-            print("[+] No CSRF vulnerability found.")
-        return csrf_vulnerable
-    except requests.RequestException as e:
-        print(f"Error scanning URL: {e}")
+        page_data = nt.fetch_page(target)
+        page_parser = PageParser(page_data)
+        all_forms = page_parser.extract_forms()
+        security_issue = False
+        
+        for web_form in all_forms:
+            # Шукаємо захисні токени у формах
+            if not web_form.has_security_token() and not web_form.has_protection_field():
+                print("[!] Потенційна проблема: форма без захисту від міжсайтових запитів")
+                security_issue = True
+                
+        if not security_issue:
+            print("[+] Форми захищені від міжсайтових запитів")
+            
+        return security_issue
+        
+    except nt.ConnectionProblem as error:
+        print(f"Помилка під час аналізу: {error}")
         return False
-
