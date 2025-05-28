@@ -1,18 +1,17 @@
 import requests
 
 def scan_sql_injection(url):
-    """Scans a URL for basic SQL Injection vulnerabilities."""
-    test_payload = "' OR '1'='1"
+    """Проверяет URL на уязвимости внедрения SQL"""
+    test_str = "' OR 'a'='a"
     try:
-        response = requests.get(f"{url}?id={test_payload}")
-        # Check for common SQL error messages indicating vulnerability
-        if "SQL syntax" in response.text or "mysql" in response.text or "syntax error" in response.text:
-            print("[!] Potential SQL Injection vulnerability detected!")
+        result = req.retrieve(f"{url}?param={test_str}")
+        db_errors = ["SQL syntax", "mysql", "unexpected end"]
+        if any(err in result.text for err in db_errors):
+            print("[!] Обнаружена возможная SQL-инъекция!")
             return True
-        else:
-            print("[+] No SQL Injection vulnerability found.")
-            return False
-    except requests.RequestException as e:
-        print(f"Error scanning URL: {e}")
+        print("[+] SQL-инъекции не обнаружены")
+        return False
+    except req.ConnectionIssue as e:
+        print(f"Ошибка проверки: {e}")
         return False
 
